@@ -1,4 +1,4 @@
-export function initNickModal() {
+export function initNickModal(startCallback) {
   const modal = document.getElementById('nick-modal');
   const nickInput = document.getElementById('nick-input');
   const saveBtn = document.getElementById('save-nick-btn');
@@ -19,11 +19,6 @@ export function initNickModal() {
     startGameBtn.style.display = 'inline-block';
   }
 
-  function startGame(nick) {
-    alert(`${nick}, oyuna başlıyorsun!`);
-    window.location.href = '/p/minecraft.html'; // Blogger sayfanın doğru linki olmalı
-  }
-
   const savedNick = localStorage.getItem('playerNick');
   if (savedNick) {
     closeModal();
@@ -35,7 +30,7 @@ export function initNickModal() {
   saveBtn.onclick = () => {
     const nick = nickInput.value.trim();
     if (nick.length < 3) {
-      alert('Lütfen en az 3 karakterlik takma ad girin.');
+      alert("En az 3 karakter girin.");
       return;
     }
     localStorage.setItem('playerNick', nick);
@@ -45,7 +40,6 @@ export function initNickModal() {
 
   startGameBtn.onclick = () => {
     const nick = localStorage.getItem('playerNick');
-    if (nick) startGame(nick);
-    else openModal();
+    if (nick && startCallback) startCallback(nick);
   };
 }
