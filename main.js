@@ -1,6 +1,11 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
 import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/controls/PointerLockControls.js';
 
+import { initNickModal } from './nickModal.js';
+
+window.addEventListener('DOMContentLoaded', () => {
+  initNickModal();
+
 let camera, scene, renderer, controls;
 let raycaster;
 let world = {};
