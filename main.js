@@ -2,183 +2,147 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.m
 import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/controls/PointerLockControls.js';
 import { initNickModal } from './nickModal.js';
 
-window.addEventListener('DOMContentLoaded', () => {
-  initNickModal();
+let scene, camera, renderer, controls, raycaster;
+let inventory = { dirt: 10 };
+let world = {};
+const BLOCK = 1;
 
-  let camera, scene, renderer, controls;
-  let raycaster;
-  let world = {};
-  const BLOCK_SIZE = 1;
-  const WORLD_SIZE = 8;
+let move = { forward: false, back: false, left: false, right: false };
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
+let prevTime = performance.now();
 
-  let inventory = { dirt: 10 };
-  let playerPos = { x: 0, y: 5, z: 0 };
+initNickModal(startGame);
 
-  let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-  let velocity = new THREE.Vector3();
-  let direction = new THREE.Vector3();
-
-  let prevTime = performance.now();
-
-  init();
+function startGame(nick) {
+  initScene();
   animate();
+}
 
-  function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87ceeb);
+function initScene() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(playerPos.x, playerPos.y, playerPos.z);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 5, 5);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-    controls = new PointerLockControls(camera, document.body);
-    document.body.addEventListener('click', () => controls.lock());
+  controls = new PointerLockControls(camera, document.body);
+  document.body.addEventListener('click', () => controls.lock());
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+  raycaster = new THREE.Raycaster();
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    directionalLight.position.set(10, 20, 10);
-    scene.add(directionalLight);
+  const light = new THREE.DirectionalLight(0xffffff, 0.8);
+  light.position.set(10, 20, 10);
+  scene.add(light);
 
-    raycaster = new THREE.Raycaster();
+  const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambient);
 
-    generateIsland();
+  generateSkyBlock();
 
-    window.addEventListener('resize', debounce(onWindowResize, 200));
-    document.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('contextmenu', e => e.preventDefault());
-
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
-  }
-
-  function generateIsland() {
-    const geometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-    const dirtMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
-
-    for (let x = -WORLD_SIZE; x <= WORLD_SIZE; x++) {
-      for (let z = -WORLD_SIZE; z <= WORLD_SIZE; z++) {
-        if (Math.sqrt(x * x + z * z) <= WORLD_SIZE) {
-          const mesh = new THREE.Mesh(geometry, dirtMat);
-          mesh.position.set(x * BLOCK_SIZE, 0, z * BLOCK_SIZE);
-          scene.add(mesh);
-          world[`${x},0,${z}`] = mesh;
-        }
-      }
-    }
-  }
-
-  function onWindowResize() {
+  window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-  }
+  });
 
-  function onMouseDown(event) {
-    if (!controls.isLocked) return;
+  document.addEventListener('keydown', e => {
+    if (e.code === 'KeyW') move.forward = true;
+    if (e.code === 'KeyS') move.back = true;
+    if (e.code === 'KeyA') move.left = true;
+    if (e.code === 'KeyD') move.right = true;
+  });
 
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-    const intersects = raycaster.intersectObjects(Object.values(world));
-    if (intersects.length > 0) {
-      const intersect = intersects[0];
+  document.addEventListener('keyup', e => {
+    if (e.code === 'KeyW') move.forward = false;
+    if (e.code === 'KeyS') move.back = false;
+    if (e.code === 'KeyA') move.left = false;
+    if (e.code === 'KeyD') move.right = false;
+  });
 
-      if (event.button === 0) {
-        const pos = intersect.object.position;
-        const key = `${Math.round(pos.x / BLOCK_SIZE)},${Math.round(pos.y / BLOCK_SIZE)},${Math.round(pos.z / BLOCK_SIZE)}`;
-        if (world[key]) {
-          const obj = world[key];
-          scene.remove(obj);
-          if (obj.geometry) obj.geometry.dispose();
-          if (obj.material) {
-            if (Array.isArray(obj.material)) obj.material.forEach(mat => mat.dispose());
-            else obj.material.dispose();
-          }
-          delete world[key];
-          inventory.dirt = (inventory.dirt || 0) + 1;
-          updateInventory();
-        }
-      } else if (event.button === 2) {
-        event.preventDefault();
-        if (!intersect.face) return;
-        const normal = intersect.face.normal.clone();
-        const pos = intersect.object.position.clone().add(normal.multiplyScalar(BLOCK_SIZE));
-        const key = `${Math.round(pos.x / BLOCK_SIZE)},${Math.round(pos.y / BLOCK_SIZE)},${Math.round(pos.z / BLOCK_SIZE)}`;
-        if (inventory.dirt > 0 && !world[key]) {
-          const geometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-          const material = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
-          const block = new THREE.Mesh(geometry, material);
-          block.position.copy(pos);
-          scene.add(block);
-          world[key] = block;
-          inventory.dirt--;
-          updateInventory();
-        }
-      }
+  document.addEventListener('mousedown', onMouseDown);
+}
+
+function generateSkyBlock() {
+  const geo = new THREE.BoxGeometry(BLOCK, BLOCK, BLOCK);
+  const mat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+
+  for (let x = -1; x <= 1; x++) {
+    for (let z = -1; z <= 1; z++) {
+      const cube = new THREE.Mesh(geo, mat);
+      cube.position.set(x, 0, z);
+      scene.add(cube);
+      world[`${x},0,${z}`] = cube;
     }
   }
+}
 
-  function updateInventory() {
-    const invDiv = document.getElementById('inventory');
-    if (invDiv) invDiv.textContent = `Toprak blok: ${inventory.dirt}`;
+function onMouseDown(e) {
+  if (!controls.isLocked) return;
+
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const intersects = raycaster.intersectObjects(Object.values(world));
+
+  if (intersects.length === 0) return;
+
+  const intersect = intersects[0];
+  const pos = intersect.object.position;
+
+  const key = `${Math.round(pos.x)},${Math.round(pos.y)},${Math.round(pos.z)}`;
+
+  if (e.button === 0 && world[key]) {
+    scene.remove(world[key]);
+    delete world[key];
+    inventory.dirt++;
+    updateInventory();
   }
 
-  function onKeyDown(event) {
-    switch (event.code) {
-      case 'KeyW': moveForward = true; break;
-      case 'KeyS': moveBackward = true; break;
-      case 'KeyA': moveLeft = true; break;
-      case 'KeyD': moveRight = true; break;
+  if (e.button === 2 && inventory.dirt > 0) {
+    e.preventDefault();
+    const normal = intersect.face.normal.clone();
+    const placePos = pos.clone().add(normal);
+    const placeKey = `${Math.round(placePos.x)},${Math.round(placePos.y)},${Math.round(placePos.z)}`;
+    if (!world[placeKey]) {
+      const geo = new THREE.BoxGeometry(BLOCK, BLOCK, BLOCK);
+      const mat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+      const cube = new THREE.Mesh(geo, mat);
+      cube.position.copy(placePos);
+      scene.add(cube);
+      world[placeKey] = cube;
+      inventory.dirt--;
+      updateInventory();
     }
   }
+}
 
-  function onKeyUp(event) {
-    switch (event.code) {
-      case 'KeyW': moveForward = false; break;
-      case 'KeyS': moveBackward = false; break;
-      case 'KeyA': moveLeft = false; break;
-      case 'KeyD': moveRight = false; break;
-    }
-  }
+function updateInventory() {
+  const div = document.getElementById('inventory');
+  if (div) div.textContent = `Toprak blok: ${inventory.dirt}`;
+}
 
-  function animate() {
-    requestAnimationFrame(animate);
+function animate() {
+  requestAnimationFrame(animate);
 
-    if (!controls.isLocked) {
-      renderer.render(scene, camera);
-      return;
-    }
+  const time = performance.now();
+  const delta = (time - prevTime) / 1000;
+  prevTime = time;
 
-    const time = performance.now();
-    const delta = (time - prevTime) / 1000;
-    prevTime = time;
+  velocity.x -= velocity.x * 10 * delta;
+  velocity.z -= velocity.z * 10 * delta;
 
-    velocity.x -= velocity.x * 10.0 * delta;
-    velocity.z -= velocity.z * 10.0 * delta;
+  direction.z = Number(move.forward) - Number(move.back);
+  direction.x = Number(move.right) - Number(move.left);
+  direction.normalize();
 
-    direction.z = Number(moveForward) - Number(moveBackward);
-    direction.x = Number(moveRight) - Number(moveLeft);
-    direction.normalize();
+  if (move.forward || move.back) velocity.z -= direction.z * 20 * delta;
+  if (move.left || move.right) velocity.x -= direction.x * 20 * delta;
 
-    const speed = 5;
+  controls.moveRight(-velocity.x * delta);
+  controls.moveForward(-velocity.z * delta);
 
-    if (moveForward || moveBackward) velocity.z += direction.z * speed * delta;
-    if (moveLeft || moveRight) velocity.x += direction.x * speed * delta;
-
-    controls.moveRight(velocity.x * delta);
-    controls.moveForward(velocity.z * delta);
-
-    renderer.render(scene, camera);
-  }
-
-  function debounce(func, wait) {
-    let timeout;
-    return function () {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, arguments), wait);
-    };
-  }
-});
+  renderer.render(scene, camera);
+}
