@@ -1,193 +1,155 @@
+// main.js
+
 (() => {
-  const gameArea = document.getElementById('game-area');
-  const nickDisplay = document.getElementById('player-nick-display');
-  const nickModal = document.getElementById('nick-modal');
-  const nickInput = document.getElementById('nick-input');
-  const saveNickBtn = document.getElementById('save-nick-btn');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
 
-  const GRID_SIZE = 8;
-  let playerNick = null;
-  let selectedBlock = 'dirt';
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
 
-  // Ada verisi: 2D dizi [y][x]
-  // Başlangıç ada: 3x3 toprak, çevresi boş
-  let islandGrid = [];
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-  // Envanter: blok adı => sayı
-  let inventory = {
-    dirt: 10,
-    wood: 5,
-    grass: 3
-  };
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
 
-  // Görev sistemi
-  let tasks = [
-    { id: 1, desc: '3 toprak bloğu kır', type: 'break', block: 'dirt', amount: 3, progress: 0, done: false },
-    { id: 2, desc: '5 tahta bloğu yerleştir', type: 'place', block: 'wood', amount: 5, progress: 0, done: false },
-  ];
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(5, 10, 7);
+  scene.add(dirLight);
 
-  // Başlat - oyuncu adı varsa modal kapat, yoksa aç
-  function init() {
-    const storedNick = localStorage.getItem('playerNick');
-    if(storedNick && storedNick.length >= 3){
-      playerNick = storedNick;
-      closeModal();
-      startGame();
-    } else {
-      openModal();
+  const blockSize = 1;
+  const islandBlocks = [];
+
+  function addBlock(x, y, z, color) {
+    const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+    const material = new THREE.MeshLambertMaterial({ color });
+    const cube = new THREE.Mesh(geometry, material);
+    cube.position.set(x, y, z);
+    scene.add(cube);
+    islandBlocks.push(cube);
+    return cube;
+  }
+
+  // Ada oluştur (5x5x1 toprak)
+  for (let x = -2; x <= 2; x++) {
+    for (let z = -2; z <= 2; z++) {
+      addBlock(x, 0, z, 0x8b4513);
+      if (Math.random() < 0.4) addBlock(x, 1, z, 0x228b22);
     }
   }
 
-  // Modal aç/kapat
-  function openModal(){
-    nickModal.style.display = 'flex';
-    nickInput.focus();
-  }
-  function closeModal(){
-    nickModal.style.display = 'none';
-  }
+  camera.position.set(0, 2, 5);
 
-  saveNickBtn.addEventListener('click', () => {
-    const val = nickInput.value.trim();
-    if(val.length < 3){
-      alert('En az 3 karakterlik takma ad girin.');
-      nickInput.focus();
-      return;
-    }
-    playerNick = val;
-    localStorage.setItem('playerNick', playerNick);
-    closeModal();
-    startGame();
+  const controls = new THREE.PointerLockControls(camera, document.body);
+
+  document.body.addEventListener('click', () => {
+    controls.lock();
   });
 
-  // Ada oluştur
-  function initGrid(){
-    islandGrid = [];
-    for(let y=0; y<GRID_SIZE; y++){
-      let row = [];
-      for(let x=0; x<GRID_SIZE; x++){
-        // Ada ortasında 3x3 toprak
-        if(x >= 2 && x <= 4 && y >= 2 && y <= 4){
-          row.push('dirt');
-        } else {
-          row.push(null);
-        }
+  const move = { forward: false, backward: false, left: false, right: false };
+  const velocity = new THREE.Vector3();
+  const direction = new THREE.Vector3();
+
+  document.addEventListener('keydown', (e) => {
+    switch (e.code) {
+      case 'KeyW':
+        move.forward = true;
+        break;
+      case 'KeyS':
+        move.backward = true;
+        break;
+      case 'KeyA':
+        move.left = true;
+        break;
+      case 'KeyD':
+        move.right = true;
+        break;
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    switch (e.code) {
+      case 'KeyW':
+        move.forward = false;
+        break;
+      case 'KeyS':
+        move.backward = false;
+        break;
+      case 'KeyA':
+        move.left = false;
+        break;
+      case 'KeyD':
+        move.right = false;
+        break;
+    }
+  });
+
+  const raycaster = new THREE.Raycaster();
+
+  window.addEventListener('mousedown', (event) => {
+    if (!controls.isLocked) return;
+
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const intersects = raycaster.intersectObjects(islandBlocks);
+
+    if (intersects.length > 0) {
+      const intersect = intersects[0];
+
+      if (event.button === 0) {
+        // Sol tık - blok kır
+        scene.remove(intersect.object);
+        islandBlocks.splice(islandBlocks.indexOf(intersect.object), 1);
+      } else if (event.button === 2) {
+        // Sağ tık - blok koy
+        const normal = intersect.face.normal.clone();
+        const pos = intersect.point.clone().add(normal.multiplyScalar(blockSize));
+        pos.x = Math.round(pos.x);
+        pos.y = Math.round(pos.y);
+        pos.z = Math.round(pos.z);
+
+        addBlock(pos.x, pos.y, pos.z, 0x8b4513);
       }
-      islandGrid.push(row);
     }
-  }
+  });
 
-  // Grid'i renderla
-  function renderGrid(){
-    let html = '';
-    for(let y=0; y<GRID_SIZE; y++){
-      for(let x=0; x<GRID_SIZE; x++){
-        const block = islandGrid[y][x];
-        html += `<div class="grid-cell ${block || 'empty'}" data-x="${x}" data-y="${y}"></div>`;
-      }
+  window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    if (controls.isLocked) {
+      const delta = clock.getDelta();
+
+      velocity.x -= velocity.x * 10.0 * delta;
+      velocity.z -= velocity.z * 10.0 * delta;
+
+      direction.z = Number(move.forward) - Number(move.backward);
+      direction.x = Number(move.right) - Number(move.left);
+      direction.normalize();
+
+      if (move.forward || move.backward) velocity.z -= direction.z * 50.0 * delta;
+      if (move.left || move.right) velocity.x -= direction.x * 50.0 * delta;
+
+      controls.moveRight(-velocity.x * delta);
+      controls.moveForward(-velocity.z * delta);
     }
-    return html;
+
+    renderer.render(scene, camera);
   }
 
-  // Envanteri renderla
-  function renderInventory(){
-    let html = '<div class="items">';
-    for(const [block, count] of Object.entries(inventory)){
-      html += `<button class="inv-item ${selectedBlock === block ? 'selected' : ''}" data-block="${block}">${block} (${count})</button>`;
-    }
-    html += '</div>';
-    return html;
-  }
+  animate();
 
-  // Görevleri renderla
-  function renderTasks(){
-    let html = '<ul>';
-    for(const task of tasks){
-      html += `<li class="${task.done ? 'done' : ''}">${task.desc} - ${task.progress}/${task.amount}</li>`;
-    }
-    html += '</ul>';
-    return html;
-  }
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-  // Ana render
-  function renderGame(){
-    nickDisplay.textContent = `${playerNick}'s Skyblock Ada`;
-    gameArea.innerHTML = `
-      <div id="island-grid">${renderGrid()}</div>
-      <div id="inventory">
-        <h3>Envanter</h3>
-        ${renderInventory()}
-        <div id="tasks">
-          <h3>Görevler</h3>
-          ${renderTasks()}
-        </div>
-      </div>
-      <div id="info-text">Sol tık: Kır, Sağ tık: Yerleştir, Seçmek için envanterden blok seç</div>
-    `;
-
-    // Grid hücrelerine olay ekle
-    document.querySelectorAll('.grid-cell').forEach(cell => {
-      cell.addEventListener('click', () => {
-        const x = +cell.dataset.x;
-        const y = +cell.dataset.y;
-        breakBlock(x,y);
-      });
-      cell.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        const x = +cell.dataset.x;
-        const y = +cell.dataset.y;
-        placeBlock(x,y);
-      });
-    });
-
-    // Envanter butonlarına olay ekle
-    document.querySelectorAll('.inv-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        selectedBlock = btn.dataset.block;
-        renderGame();
-      });
-    });
-  }
-
-  // Blok kırma
-  function breakBlock(x,y){
-    if(islandGrid[y][x]){
-      const block = islandGrid[y][x];
-      islandGrid[y][x] = null;
-      inventory[block] = (inventory[block] || 0) + 1;
-      updateTasks('break', block);
-      renderGame();
-    }
-  }
-
-  // Blok yerleştirme
-  function placeBlock(x,y){
-    if(!islandGrid[y][x] && inventory[selectedBlock] > 0){
-      islandGrid[y][x] = selectedBlock;
-      inventory[selectedBlock]--;
-      updateTasks('place', selectedBlock);
-      renderGame();
-    }
-  }
-
-  // Görev güncelle
-  function updateTasks(type, block){
-    tasks.forEach(task => {
-      if(!task.done && task.type === type && task.block === block){
-        task.progress++;
-        if(task.progress >= task.amount){
-          task.done = true;
-          alert(`Görevi tamamladınız:\n${task.desc}`);
-        }
-      }
-    });
-  }
-
-  // Başlat
-  function startGame(){
-    initGrid();
-    renderGame();
-  }
-
-  init();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 })();
