@@ -146,3 +146,14 @@ function animate() {
 
   renderer.render(scene, camera);
 }
+
+  // Basit debounce fonksiyonu (resize için)
+  function debounce(func, wait) {
+    let timeout;
+    return function () {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, arguments), wait);
+    };
+  }
+
+}); // BUNUN EKLİ OLDUĞUNDAN EMİN OLUN!
