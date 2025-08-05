@@ -75,3 +75,34 @@ body {
   text-decoration: line-through;
   color: #555;
 }
+
+#island-grid {
+  display: inline-block;
+  border: 2px solid #00ffaa;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  user-select: none;
+}
+.grid-row {
+  display: flex;
+}
+.grid-cell {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #006644;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.grid-cell.empty {
+  background-color: #0a0a0a;
+}
+.grid-cell.dirt {
+  background-color: #5a4d2f;
+  box-shadow: inset 0 0 5px #7b683a;
+}
+.grid-cell.wood {
+  background-color: #7a5230;
+  box-shadow: inset 0 0 5px #9d7545;
+}
+
