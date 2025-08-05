@@ -1,145 +1,36 @@
 /* main.css */
-
-/* Genel body ayarları */
-body, html {
+body {
   margin: 0;
-  padding: 0;
   overflow: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to bottom, #87ceeb 0%, #222 100%);
-  color: #eee;
-  user-select: none;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(to bottom, #87ceeb, #1e90ff);
+  color: white;
 }
 
-/* Bilgi kutucuğu */
-#info {
-  position: absolute;
+#inventory {
+  position: fixed;
   top: 10px;
   left: 10px;
-  background: rgba(0,0,0,0.6);
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-size: 14px;
-  z-index: 10;
-  max-width: 320px;
-  line-height: 1.4;
-}
-
-/* Envanter */
-#inventory {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 6px;
-  background: rgba(0,0,0,0.6);
-  padding: 10px 15px;
-  border-radius: 10px;
-  z-index: 20;
-}
-
-.inventory-slot {
-  width: 48px;
-  height: 48px;
-  border: 2px solid #0f0;
-  border-radius: 6px;
-  background: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-}
-
-.inventory-slot.selected {
-  border-color: #0ff;
-}
-
-.inventory-slot img {
-  max-width: 36px;
-  max-height: 36px;
-  pointer-events: none;
-}
-
-/* Tooltip */
-#tooltip {
-  position: absolute;
-  background: rgba(0,0,0,0.8);
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 4px;
-  pointer-events: none;
-  color: #0f0;
-  z-index: 1000;
-  display: none;
-}
-
-/* Craft menüsü (basit popup) */
-#craft-menu {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 320px;
-  background: rgba(20,20,20,0.95);
-  border: 2px solid #0f0;
-  border-radius: 12px;
-  padding: 20px;
-  box-sizing: border-box;
-  transform: translate(-50%, -50%);
-  display: none;
-  z-index: 100;
-}
-
-#craft-menu h3 {
-  margin-top: 0;
-  color: #0f0;
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-#craft-menu .recipe-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-
-.craft-recipe {
-  background: #111;
-  border: 1px solid #0f0;
-  border-radius: 6px;
-  width: 90px;
-  padding: 8px;
-  cursor: pointer;
-  text-align: center;
-  color: #0f0;
-  user-select: none;
-  transition: background 0.2s ease;
-}
-
-.craft-recipe:hover {
-  background: #0f4;
-}
-
-.craft-recipe img {
-  max-width: 48px;
-  margin-bottom: 4px;
-}
-
-/* Butonlar */
-button {
-  cursor: pointer;
-  background: #0a0;
-  color: #0ff;
-  border: none;
+  background: rgba(0,0,0,0.5);
   padding: 8px 12px;
   border-radius: 6px;
   font-weight: bold;
-  transition: background 0.3s ease;
+  font-size: 1rem;
+  user-select: none;
+  pointer-events: none;
 }
 
-button:hover {
-  background: #0f0;
-  color: #000;
+#info {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.5);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 1rem;
+  user-select: none;
+  pointer-events: none;
+  max-width: 250px;
+  text-align: right;
 }
