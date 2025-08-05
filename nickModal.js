@@ -20,7 +20,8 @@ export function initNickModal() {
   }
 
   function startGame(nick) {
-    closeModal(); // Modalı kapat, oyun başlasın
+    alert(`${nick}, oyuna başlıyorsun!`);
+    window.location.href = '/p/minecraft.html'; // Blogger sayfanın doğru linki olmalı
   }
 
   const savedNick = localStorage.getItem('playerNick');
