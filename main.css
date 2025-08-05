@@ -1,49 +1,77 @@
 /* main.css */
 
-/* Genel reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 body {
-  background: linear-gradient(to bottom, #87ceeb, #3a7bd5); /* gökyüzü mavi tonları */
+  background: linear-gradient(to bottom right, #111, #1c1c1c);
   font-family: 'Mojangles', sans-serif;
-  color: #222;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#game-container {
-  width: 900px;
-  max-width: 95vw;
-  background: #1e1e1e;
-  border-radius: 15px;
-  box-shadow: 0 0 30px #00ffaaaa;
-  padding: 20px;
   color: #eee;
+  padding: 20px;
 }
 
-/* Oyuncu bilgi ve hoşgeldin */
-#player-nick-display {
-  font-size: 1.6rem;
-  margin-bottom: 15px;
-  color: #00ffaa;
-  text-align: center;
-  font-weight: 700;
-}
-
-/* Oyun alanı */
-#game-area {
-  height: 500px;
-  background: #2a2a2a;
+#island-grid {
+  display: inline-block;
+  border: 2px solid #00ffaa;
   border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 0 20px #00ffaa44;
+  margin-bottom: 20px;
+  user-select: none;
+}
+.grid-row {
+  display: flex;
+}
+.grid-cell {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #006644;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.grid-cell.empty {
+  background-color: #0a0a0a;
+}
+.grid-cell.dirt {
+  background-color: #5a4d2f;
+  box-shadow: inset 0 0 5px #7b683a;
+}
+.grid-cell.wood {
+  background-color: #7a5230;
+  box-shadow: inset 0 0 5px #9d7545;
 }
 
-/* Daha sonraki oyun içi öğeler buraya gelecek */
+/* Envanter */
+#inventory {
+  margin-bottom: 20px;
+}
+#inventory h3, #tasks h3 {
+  margin-bottom: 10px;
+  color: #00ffaa;
+}
+.inv-item {
+  background: #222;
+  border: 2px solid #00ffaa;
+  border-radius: 8px;
+  color: #00ffaa;
+  padding: 8px 14px;
+  margin: 3px;
+  cursor: pointer;
+  font-weight: 700;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+.inv-item.selected {
+  background-color: #00ffaa;
+  color: #111;
+}
+
+/* Görevler */
+#tasks ul {
+  list-style: none;
+  padding-left: 0;
+}
+#tasks li {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+#tasks li.done {
+  text-decoration: line-through;
+  color: #555;
+}
