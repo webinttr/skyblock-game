@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minecraft Benzeri Oyun</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: monospace;
+      background: #000;
+    }
+
+    #inventory {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      color: white;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+
+    #nick-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+    }
+
+    #nick-modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #222;
+      padding: 20px;
+      border-radius: 8px;
+      color: white;
+      text-align: center;
+    }
+
+    input, button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin: 5px;
+    }
+
+    #start-game-btn {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="inventory">Toprak blok: 10</div>
+
+<div id="nick-modal">
+  <div class="modal-content">
+    <h2>Takma Adını Gir</h2>
+    <input id="nick-input" type="text" placeholder="En az 3 karakter" />
+    <br />
+    <button id="save-nick-btn">Kaydet</button>
+    <button id="start-game-btn">Oyuna Başla</button>
+    <p id="player-nick-display"></p>
+  </div>
+</div>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
