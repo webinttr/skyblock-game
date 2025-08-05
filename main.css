@@ -1,31 +1,41 @@
-/* Tam ekran ve sıfır margin */
-body, html {
+body {
   margin: 0;
-  padding: 0;
   overflow: hidden;
-  height: 100%;
-  font-family: Arial, sans-serif;
-  background-color: #87ceeb;
-  color: #333;
+  font-family: sans-serif;
 }
 
-/* Renderer (canvas) tam ekran */
-canvas {
-  display: block; /* alt boşluk kaldırmak için */
-  width: 100vw;
-  height: 100vh;
-}
-
-/* Envanter kutusu - sağ üst köşe */
-#inventory {
+#nick-modal {
   position: fixed;
-  top: 15px;
-  right: 15px;
-  padding: 10px 15px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 6px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  display: none;
+}
+
+#nick-modal.active {
+  display: flex;
+}
+
+#nick-modal div {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+#inventory {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255,255,255,0.8);
+  padding: 8px 12px;
+  border-radius: 4px;
   font-weight: bold;
-  user-select: none;
-  box-shadow: 0 0 5px rgba(0,0,0,0.2);
-  z-index: 10;
+  z-index: 1000;
 }
