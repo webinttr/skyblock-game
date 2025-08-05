@@ -14,6 +14,8 @@ let moveForward = false, moveBackward = false, moveLeft = false, moveRight = fal
 let velocity = new THREE.Vector3();
 let direction = new THREE.Vector3();
 
+let prevTime = performance.now();
+
 init();
 animate();
 
@@ -42,7 +44,7 @@ function init() {
 
   generateIsland();
 
-  window.addEventListener('resize', onWindowResize);
+  window.addEventListener('resize', debounce(onWindowResize, 200));
   document.addEventListener('mousedown', onMouseDown);
   document.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -77,22 +79,23 @@ function onMouseDown(event) {
   if (!controls.isLocked) return;
 
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-
   const intersects = raycaster.intersectObjects(Object.values(world));
   if (intersects.length > 0) {
     const intersect = intersects[0];
 
-    if (event.button === 0) {
+    if (event.button === 0) { // Sol tıklama - blok kır
       const pos = intersect.object.position;
       const key = `${Math.round(pos.x / BLOCK_SIZE)},${Math.round(pos.y / BLOCK_SIZE)},${Math.round(pos.z / BLOCK_SIZE)}`;
-      scene.remove(world[key]);
-      delete world[key];
-      inventory.dirt = (inventory.dirt || 0) + 1;
-      updateInventory();
-    } else if (event.button === 2) {
+      if(world[key]) {
+        scene.remove(world[key]);
+        delete world[key];
+        inventory.dirt = (inventory.dirt || 0) + 1;
+        updateInventory();
+      }
+    } else if (event.button === 2) { // Sağ tıklama - blok ekle
       event.preventDefault();
 
-      const normal = intersect.face.normal;
+      const normal = intersect.face.normal.clone(); // clone önemli
       const pos = intersect.object.position.clone().add(normal.multiplyScalar(BLOCK_SIZE));
       const key = `${Math.round(pos.x / BLOCK_SIZE)},${Math.round(pos.y / BLOCK_SIZE)},${Math.round(pos.z / BLOCK_SIZE)}`;
 
@@ -136,7 +139,15 @@ function onKeyUp(event) {
 function animate() {
   requestAnimationFrame(animate);
 
-  const delta = 0.1; // sabit delta, istersen saatten alabilirsin
+  if (!controls.isLocked) {
+    renderer.render(scene, camera);
+    return;
+  }
+
+  const time = performance.now();
+  const delta = (time - prevTime) / 1000; // saniye cinsinden delta
+  prevTime = time;
+
   velocity.x -= velocity.x * 10.0 * delta;
   velocity.z -= velocity.z * 10.0 * delta;
 
@@ -153,4 +164,13 @@ function animate() {
   controls.moveForward(velocity.z * delta);
 
   renderer.render(scene, camera);
+}
+
+// Basit debounce fonksiyonu (resize için)
+function debounce(func, wait) {
+  let timeout;
+  return function() {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, arguments), wait);
+  };
 }
