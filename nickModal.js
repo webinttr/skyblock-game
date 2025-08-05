@@ -18,7 +18,9 @@ export function initNickModal() {
   }
   function startGame(nick) {
     alert(`${nick}, oyuna başlıyorsun!`);
-    window.location.href = '/p/minecraft.html'; // Gerekirse güncelle
+    // Burada sayfa yenilenmeden oyunu başlatmak için
+    // Modal gizleniyor, oyun başlıyor
+    closeModal();
   }
 
   const savedNick = localStorage.getItem('playerNick');
