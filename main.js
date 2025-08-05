@@ -1,6 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
 import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/controls/PointerLockControls.js';
-
 import { initNickModal } from './nickModal.js';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -46,13 +45,11 @@ window.addEventListener('DOMContentLoaded', () => {
     scene.add(directionalLight);
 
     raycaster = new THREE.Raycaster();
-
     generateIsland();
 
     window.addEventListener('resize', debounce(onWindowResize, 200));
     document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('contextmenu', e => e.preventDefault());
-
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
   }
@@ -76,7 +73,6 @@ window.addEventListener('DOMContentLoaded', () => {
   function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
@@ -88,35 +84,27 @@ window.addEventListener('DOMContentLoaded', () => {
     if (intersects.length > 0) {
       const intersect = intersects[0];
 
-      if (event.button === 0) { // Sol tıklama - blok kır
+      if (event.button === 0) { // Sol tıklama
         const pos = intersect.object.position;
-        const key = `${Math.round(pos.x / BLOCK_SIZE)},${Math.round(pos.y / BLOCK_SIZE)},${Math.round(pos.z / BLOCK_SIZE)}`;
-        if(world[key]) {
-          // Bellek temizliği
+        const key = `${Math.round(pos.x)},${Math.round(pos.y)},${Math.round(pos.z)}`;
+        if (world[key]) {
           const obj = world[key];
           scene.remove(obj);
           if (obj.geometry) obj.geometry.dispose();
           if (obj.material) {
-            if (Array.isArray(obj.material)) {
-              obj.material.forEach(mat => mat.dispose());
-            } else {
-              obj.material.dispose();
-            }
+            Array.isArray(obj.material)
+              ? obj.material.forEach(m => m.dispose())
+              : obj.material.dispose();
           }
           delete world[key];
-
-          inventory.dirt = (inventory.dirt || 0) + 1;
+          inventory.dirt++;
           updateInventory();
         }
-      } else if (event.button === 2) { // Sağ tıklama - blok ekle
-        event.preventDefault();
-
+      } else if (event.button === 2) { // Sağ tıklama
         if (!intersect.face) return;
-
-        const normal = intersect.face.normal.clone(); // clone önemli
+        const normal = intersect.face.normal.clone();
         const pos = intersect.object.position.clone().add(normal.multiplyScalar(BLOCK_SIZE));
-        const key = `${Math.round(pos.x / BLOCK_SIZE)},${Math.round(pos.y / BLOCK_SIZE)},${Math.round(pos.z / BLOCK_SIZE)}`;
-
+        const key = `${Math.round(pos.x)},${Math.round(pos.y)},${Math.round(pos.z)}`;
         if (inventory.dirt > 0 && !world[key]) {
           const geometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
           const material = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
@@ -156,7 +144,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function animate() {
     requestAnimationFrame(animate);
-
     if (!controls.isLocked) {
       renderer.render(scene, camera);
       return;
@@ -174,7 +161,6 @@ window.addEventListener('DOMContentLoaded', () => {
     direction.normalize();
 
     const speed = 5;
-
     if (moveForward || moveBackward) velocity.z += direction.z * speed * delta;
     if (moveLeft || moveRight) velocity.x += direction.x * speed * delta;
 
@@ -184,12 +170,12 @@ window.addEventListener('DOMContentLoaded', () => {
     renderer.render(scene, camera);
   }
 
-  // Basit debounce fonksiyonu (resize için)
   function debounce(func, wait) {
     let timeout;
-    return function() {
+    return function () {
       clearTimeout(timeout);
       timeout = setTimeout(() => func.apply(this, arguments), wait);
     };
   }
+
 });
