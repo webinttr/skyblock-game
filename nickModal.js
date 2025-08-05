@@ -9,18 +9,18 @@ export function initNickModal() {
     modal.classList.add('active');
     nickInput.focus();
   }
+
   function closeModal() {
     modal.classList.remove('active');
   }
+
   function showWelcome(nick) {
     nickDisplay.textContent = `Hoş geldin, ${nick}!`;
     startGameBtn.style.display = 'inline-block';
   }
+
   function startGame(nick) {
-    alert(`${nick}, oyuna başlıyorsun!`);
-    // Burada sayfa yenilenmeden oyunu başlatmak için
-    // Modal gizleniyor, oyun başlıyor
-    closeModal();
+    closeModal(); // Modalı kapat, oyun başlasın
   }
 
   const savedNick = localStorage.getItem('playerNick');
